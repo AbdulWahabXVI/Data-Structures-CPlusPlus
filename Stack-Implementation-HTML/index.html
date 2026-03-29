@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Portal with Fullscreen Login</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body,
+    html {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      font-family: "Poppins", sans-serif;
+      background: linear-gradient(135deg, #232526, #414345);
+      color: #fff;
+    }
+
+    /* ===== Login Fullscreen Overlay ===== */
+    #loginOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(35, 37, 38, 0.95);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 999;
+    }
+
+    .login-box {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 40px;
+      border-radius: 15px;
+      width: 320px;
+      text-align: center;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.4);
+    }
+
+    .login-box h2 {
+      margin-bottom: 25px;
+      color: #00adb5;
+    }
+
+    .login-box input {
+      width: 100%;
+      padding: 10px;
+      margin: 8px 0;
+      border: none;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .login-box button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 15px;
+      border: none;
+      border-radius: 8px;
+      background-color: #00adb5;
+      color: #fff;
+      font-size: 16px;
+      cursor: pointer;
+      transition: 0.3s;
+    }
+
+    .login-box button:hover {
+      background-color: #08c1cc;
+    }
+
+    /* ===== Sidebar ===== */
+    .sidebar {
+      width: 220px;
+      background: #1f1f1f;
+      height: 100vh;
+      padding-top: 30px;
+      position: fixed;
+      top: 0;
+      left: 0;
+      display: none;
+      /* hidden until login */
+    }
+
+    .sidebar h3 {
+      text-align: center;
+      color: #00adb5;
+      margin-bottom: 20px;
+    }
+
+    .sidebar a {
+      display: block;
+      width: 80%;
+      margin: 8px auto;
+      padding: 12px;
+      border-radius: 8px;
+      background: #2b2b2b;
+      color: #fff;
+      text-decoration: none;
+      transition: 0.3s;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+      background: #00adb5;
+    }
+
+    /* ===== Iframe Page ===== */
+    .page-frame {
+      margin-left: 240px;
+      height: 100%;
+      display: none;
+      /* hidden until login */
+    }
+
+    iframe {
+      border: none;
+      width: 100%;
+      height: 100%;
+      transition: opacity 0.25s ease;
+      opacity: 1;
+    }
+
+    /* Ribbon buttons */
+    #ribbon {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+
+    #ribbon button {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      border: none;
+      background: #00adb5;
+      color: #fff;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: 0.3s;
+    }
+
+    #ribbon button:hover {
+      background: #08c1cc;
+    }
+  </style>
+</head>
+
+<body>
+
+  <body>
+
+    <!-- ===== LOGIN OVERLAY ===== -->
+    <div id="loginOverlay">
+      <div class="login-box">
+        <h2>Login</h2>
+        <input type="text" placeholder="Username" id="username">
+        <input type="password" placeholder="Password" id="password">
+        <button onclick="login()">Login</button>
+      </div>
+    </div>
+
+    <!-- ===== Ribbon with Back / Forward buttons ===== -->
+    <div id="ribbon">
+      <button id="backBtn" title="Back" onclick="goBack()">
+        &#9664; <!-- Left arrow icon -->
+      </button>
+      <button id="forwardBtn" title="Forward" onclick="goForward()">
+        &#9654; <!-- Right arrow icon -->
+      </button>
+    </div>
+
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar" id="sidebar">
+      <h3>My Portal</h3>
+      <a class="active" href="#" onclick="loadPage('home.html', event)">🏠 Home</a>
+      <a href="#" onclick="loadPage('projects.html', event)">💼 Projects</a>
+      <a href="#" onclick="loadPage('about.html', event)">ℹ️ About</a>
+      <a href="#" onclick="loadPage('contact.html', event)">✉️ Contact</a>
+    </div>
+
+    <!-- ===== IFRAME ===== -->
+    <div class="page-frame" id="pageFrame">
+      <iframe id="contentFrame" src=""></iframe>
+    </div>
+
+    <script>
+
+      function StackNode(value, next = null) {
+        this.value = value;
+        this.next = next;
+      }
+
+      function LinkedStack() {
+        this.head = null;
+        this._size = 0;
+      }
+
+      LinkedStack.prototype.push = function (value) {
+        const node = new StackNode(value, this.head);
+        this.head = node;
+        this._size++;
+      };
+
+      LinkedStack.prototype.pop = function () {
+        if (!this.head) return null;
+        const val = this.head.value;
+        this.head = this.head.next;
+        this._size--;
+        return val;
+      };
+
+      LinkedStack.prototype.peek = function () {
+        return this.head ? this.head.value : null;
+      };
+
+      LinkedStack.prototype.isEmpty = function () {
+        return this._size === 0;
+      };
+
+      LinkedStack.prototype.clear = function () {
+        this.head = null;
+        this._size = 0;
+      };
+
+      LinkedStack.prototype.size = function () { return this._size; };
+
+      const backStack = new LinkedStack();
+      const forwardStack = new LinkedStack();
+
+      // current page is tracked separately (top of view)
+      let currentPage = null;
+
+      // Enable/disable ribbon buttons based on stacks
+      function updateRibbonButtons() {
+        document.getElementById('backBtn').disabled = backStack.isEmpty();
+        document.getElementById('forwardBtn').disabled = forwardStack.isEmpty();
+      }
+
+      // Smooth iframe load: fade out, change src, fade in
+      const frame = document.getElementById('contentFrame');
+      let pendingSet = null;
+
+      function setIframeSrc(src, markActive) {
+        if (!frame) return;
+        frame.style.opacity = 0; // fade out
+        // small timeout to allow opacity transition
+        setTimeout(() => {
+          frame.src = src;
+          if (markActive) {
+            document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+            const link = Array.from(document.querySelectorAll('.sidebar a')).find(a => a.getAttribute('onclick') && a.getAttribute('onclick').includes(`'${src}'`));
+            if (link) link.classList.add('active');
+          }
+        }, 200);
+      }
+
+      // When iframe finishes loading, fade it back in
+      frame.addEventListener('load', () => {
+        frame.style.opacity = 1;
+      });
+
+      // ================= LOGIN / PAGE SWITCHING =================
+      function login() {
+        const user = document.getElementById('username').value.trim();
+        const pass = document.getElementById('password').value.trim();
+        if (user && pass) {
+          document.getElementById('loginOverlay').style.display = 'none';
+          document.getElementById('sidebar').style.display = 'block';
+          document.getElementById('pageFrame').style.display = 'block';
+          // clear stacks and load home
+          backStack.clear();
+          forwardStack.clear();
+          currentPage = null;
+          loadPage('home.html');
+        } else {
+          alert("Please enter both username and password.");
+        }
+      }
+
+      function loadPage(page, event, fromHistory = false) {
+        const pageName = page.split('/').pop();
+
+        if (!fromHistory) {
+          if (currentPage && currentPage !== pageName) {
+            backStack.push(currentPage);
+            forwardStack.clear();
+          }
+        }
+
+        currentPage = pageName;
+        // actually set iframe src with smooth transition
+        setIframeSrc(pageName, true);
+
+        // update active class (use event.currentTarget when available)
+        if (event) {
+          event.preventDefault();
+          const anchor = event.currentTarget || event.target;
+          document.querySelectorAll('.sidebar a').forEach(a => a.classList.remove('active'));
+          // ensure we add active to the anchor element
+          if (anchor && anchor.tagName === 'A') anchor.classList.add('active');
+        }
+
+        updateRibbonButtons();
+      }
+
+      // ================= BACK / FORWARD BUTTON =================
+      function goBack() {
+        if (backStack.isEmpty()) return;
+        if (currentPage) forwardStack.push(currentPage);
+        const previous = backStack.pop();
+        currentPage = previous;
+        setIframeSrc(previous, true);
+        updateRibbonButtons();
+      }
+
+      function goForward() {
+        if (forwardStack.isEmpty()) return;
+        if (currentPage) backStack.push(currentPage);
+        const next = forwardStack.pop();
+        currentPage = next;
+        setIframeSrc(next, true);
+        updateRibbonButtons();
+      }
+    </script>
+
+  </body>
+
+
+</html>
+
